@@ -1,0 +1,116 @@
+blueprint:
+  name: Dexcom to Ulanzi/AWTRIX Display
+  description: |
+    Display real-time Dexcom glucose readings with trend arrows on your Ulanzi/AWTRIX clock.
+  domain: automation
+  source_url: https://raw.githubusercontent.com/sol-ochs/home-assistant-blueprints/main/dexcom/blueprint.yml
+  author: sol-ochs
+  input:
+    glucose_sensor:
+      name: Glucose Value Sensor
+      description: Your Dexcom glucose value sensor (mg/dL)
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+
+    trend_sensor:
+      name: Glucose Trend Sensor
+      description: Your Dexcom glucose trend sensor
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+
+    mqtt_topic:
+      name: MQTT Topic
+      description: The MQTT topic for your AWTRIX custom app
+      default: "awtrix/custom/dexcom"
+      selector:
+        text:
+
+variables:
+  glucose_entity: !input glucose_sensor
+  trend_entity: !input trend_sensor
+
+trigger:
+  - platform: state
+    entity_id: !input glucose_sensor
+
+action:
+  - service: mqtt.publish
+    data:
+      topic: !input mqtt_topic
+      payload: >
+        {% set glucose = states(glucose_entity) | int(0) %}
+        {% set is_valid = glucose > 0 %}
+        {% set trend = states(trend_entity) | lower | replace(' ', '_') %}
+        {% set c = [255, 255, 255] %}
+
+        {% set map_steady = [
+          "  X  ",
+          "   X ",
+          "XXXXX",
+          "   X ",
+          "  X  "
+        ] %}
+
+        {% set map_up = [
+          "  X  ",
+          " XXX ",
+          "X X X",
+          "  X  ",
+          "  X  "
+        ] %}
+
+        {% set map_down = [
+          "  X  ",
+          "  X  ",
+          "X X X",
+          " XXX ",
+          "  X  "
+        ] %}
+
+        {% set map_up_right = [
+          " XXXX",
+          "   XX",
+          "  X X",
+          " X  X",
+          "X    "
+        ] %}
+
+        {% set map_down_right = [
+          "X    ",
+          " X  X",
+          "  X X",
+          "   XX",
+          " XXXX"
+        ] %}
+
+        {% set map_question = [
+          "XXX  ",
+          "  X  ",
+          " X   ",
+          "     ",
+          " X   "
+        ] %}
+
+        {% set arrow_map = {'steady': map_steady, 'rising': map_up, 'rising_quickly': map_up, 'falling': map_down, 'falling_quickly': map_down, 'rising_slightly': map_up_right, 'falling_slightly': map_down_right} %}
+        {% set current_map = arrow_map.get(trend, map_question) %}
+        {% set ns = namespace(draw=[]) %}
+        {% for row in current_map %}
+          {% set y = loop.index0 + 1 %}
+          {% for char in row %}
+            {% if char == 'X' %}
+              {% set x = loop.index0 + 26 %}
+              {% set ns.draw = ns.draw + [{"dp": [x, y, c]}] %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+        {% if is_valid %}
+          {"icon": "8192", "text": "{{ glucose }}  ", "draw": {{ ns.draw | to_json }}}
+        {% else %}
+          {"icon": "8192", "text": "???  "}
+        {% endif %}
+
+mode: restart
