@@ -5,7 +5,7 @@ A collection of Home Assistant automation blueprints for displaying data on Ulan
 ## Available Blueprints
 
 ### [Dexcom to AWTRIX Display](dexcom/)
-Display real-time Dexcom glucose readings with trend arrows on your Ulanzi clock.
+Display real-time Dexcom glucose readings with trend arrows on your Ulanzi/AWTRIX clock.
 
 ## General Requirements
 
@@ -20,8 +20,6 @@ Each blueprint directory contains:
 - Installation instructions
 - Configuration options
 - Required integrations
-
-Import blueprints directly into Home Assistant via Settings → Automations & Scenes → Blueprints → Import Blueprint.
 
 ## License
 

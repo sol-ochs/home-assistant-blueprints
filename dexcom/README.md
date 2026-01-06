@@ -4,6 +4,13 @@ Display real-time Dexcom glucose readings with trend arrows on your Ulanzi smart
 
 <img src="screenshot.png" alt="Screenshot" width="400">
 
+## Features
+
+- Real-time glucose values
+- Custom trend arrows using AWTRIX drawing commands (AWTRIX does not support secondary icons or rendering ASCII arrow characters in text)
+- Updates on sensor changes
+- Handles unexpected glucose and trend values
+
 ## Requirements
 
 - [Dexcom integration](https://www.home-assistant.io/integrations/dexcom/) with sensors:
