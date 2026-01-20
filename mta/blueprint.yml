@@ -1,0 +1,80 @@
+blueprint:
+  name: MTA Subway Times to Ulanzi/AWTRIX Display
+  description: Display next 3 subway arrival times on your Ulanzi/AWTRIX clock.
+  domain: automation
+  source_url: https://raw.githubusercontent.com/sol-ochs/home-assistant-blueprints/main/mta/blueprint.yml
+  author: sol-ochs
+  input:
+    line_icon:
+      name: Subway Line Icon ID
+      description: "AWTRIX icon ID for your subway line. Find icons at https://developer.lametric.com/icons and download to your device."
+      default: "72094"
+      selector:
+        text:
+
+    sensor_1:
+      name: First Arrival Sensor
+      description: Sensor for the next arriving train (minutes)
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+
+    sensor_2:
+      name: Second Arrival Sensor
+      description: Sensor for the second arriving train (minutes)
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+
+    sensor_3:
+      name: Third Arrival Sensor
+      description: Sensor for the third arriving train (minutes)
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+
+    awtrix_device:
+      name: AWTRIX Device
+      description: MQTT topic prefix for your AWTRIX device
+      default: "awtrix"
+      selector:
+        text:
+
+    app_name:
+      name: App Name
+      description: Custom app name on AWTRIX
+      default: "mta"
+      selector:
+        text:
+
+trigger:
+  - platform: state
+    entity_id: !input sensor_1
+  - platform: state
+    entity_id: !input sensor_2
+  - platform: state
+    entity_id: !input sensor_3
+
+variables:
+  line_icon: !input line_icon
+  sensor_1_entity: !input sensor_1
+  sensor_2_entity: !input sensor_2
+  sensor_3_entity: !input sensor_3
+  device: !input awtrix_device
+  app: !input app_name
+
+action:
+  - service: mqtt.publish
+    data:
+      topic: "{{ device }}/custom/{{ app }}"
+      payload: >
+        {
+          "icon": "{{ line_icon }}",
+          "text": "{{ states(sensor_1_entity) | int }},{{ states(sensor_2_entity) | int }},{{ states(sensor_3_entity) | int }}",
+          "scrollSpeed": 50
+        }
+
+mode: restart
